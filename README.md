@@ -18,7 +18,7 @@
 ## 🖥️ Demo Langsung
 
 Coba aplikasinya secara langsung di:  
-**[https://notepad-web.github.io/hitung](https://notepad-web.github.io/hitung)**
+**[https://rapihin.github.io/hitung](https://rapihin.github.io/hitung)**
 
 ---
 
