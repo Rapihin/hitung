@@ -6,19 +6,17 @@
     <title>Kalkulator Nilai Akademik - PintarHitung</title>
 
     <meta name="description" content="Kalkulator akademik untuk nilai akhir, IPK, PPDB, dan lainnya. Gratis dan mudah digunakan.">
-    <meta name="keywords" content="kalkulator nilai, ipk, akademik, sekolah, ppdb, uas, uts">
+    <meta name="keywords" content="kalkulator nilai, ipk, akademik, sekolah, ppdb, uas, uts, pintarhitung, hitung nilai">
     <meta property="og:title" content="Kalkulator Nilai Akademik - PintarHitung">
     <meta property="og:description" content="Alat bantu hitung nilai sekolah dan kuliah secara otomatis dan akurat.">
-    <meta property="og:image" content="URL_LOGO_JIKA_ADA"> <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <meta property="og:image" content="URL_LOGO_JIKA_ADA"> <meta property="og:type" content="website">
 
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
-
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
     <style type="text/tailwindcss">
@@ -27,83 +25,142 @@
             h1, h2, h3, h4, h5, h6 { font-family: 'Space Grotesk', sans-serif; @apply leading-tight font-bold; }
             body, .card { @apply transition-colors duration-300 ease-in-out; }
             .btn { @apply inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed; }
-            .btn-secondary { @apply inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed; }
+            .btn-secondary { @apply inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out; }
             .input-field { @apply block w-full px-4 py-3 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500; @apply transition duration-150 ease-in-out; }
             .card { @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden p-6 md:p-8; }
+            .nav-link { @apply text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition; }
+            .nav-link-mobile { @apply block text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition; }
         }
-        @layer utilities { /* Optional custom utilities */ }
     </style>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], 'space': ['Space Grotesk', 'sans-serif'], }, } }
-        }
+        // Konfigurasi Tailwind
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], 'space': ['Space Grotesk', 'sans-serif'], }, } } }
+
+        // --- Helper Functions (Global Scope) ---
+        function gradeToValue(grade) { const g={'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C':2.0,'D':1.0,'E':0.0}; return g[String(grade).toUpperCase()]??0.0; }
+        function valueToGrade(value, scale=null) { let s=[{g:'A',m:85},{g:'A-',m:80},{g:'B+',m:75},{g:'B',m:70},{g:'B-',m:65},{g:'C+',m:60},{g:'C',m:55},{g:'D',m:40},{g:'E',m:0}]; if(scale&&Array.isArray(scale)&&scale.length>0)s=[...scale].sort((a,b)=>b.min-a.min); const n=parseFloat(value); if(isNaN(n)||n===null)return'-'; const r=Math.round(n); for(const l of s)if(r>=parseFloat(l.min))return l.grade; return'E'; }
+        function formatNumber(num, dec=2) { const n=parseFloat(num); if(isNaN(n)||n===null)return'-'; return n.toFixed(dec); }
+
+        // --- Dark Mode Logic (Global Scope) ---
+        function manageDarkMode() { const M=window.matchMedia('(prefers-color-scheme: dark)'); const p=localStorage.getItem('darkMode'); function a(d){const r=document.documentElement; const c=(d&&!r.classList.contains('dark'))||(!d&&r.classList.contains('dark')); if(d){r.classList.add('dark');localStorage.setItem('darkMode','true');}else{r.classList.remove('dark');localStorage.setItem('darkMode','false');} if(c)window.dispatchEvent(new CustomEvent('darkModeChanged',{detail:{isDark:d}}));} if(p!==null)a(p==='true');else a(M.matches); M.addEventListener('change',(e)=>{if(localStorage.getItem('darkMode')===null)a(e.matches);}); window.toggleDarkMode=()=>{a(!document.documentElement.classList.contains('dark'));}; }
+        manageDarkMode();
+
+        // --- Alpine Component Definitions ---
+        document.addEventListener('alpine:init', () => {
+
+            Alpine.data('appSetup', () => ({
+                isDark: document.documentElement.classList.contains('dark'),
+                mobileMenuOpen: false,
+                showBackToTop: false,
+                toastVisible: false, toastMessage: '', toastTimeout: null, // Toast state
+                init() {
+                    window.addEventListener('darkModeChanged', (event) => { this.isDark = event.detail.isDark; });
+                    AOS.init({ duration: 800, once: true, offset: 50, });
+                    this.showBackToTop = (window.scrollY > 200);
+                },
+                showToast(message, duration = 3000) { // Toast function
+                    clearTimeout(this.toastTimeout); this.toastMessage = message; this.toastVisible = true;
+                    this.toastTimeout = setTimeout(() => { this.toastVisible = false; }, duration);
+                }
+            }));
+
+            Alpine.data('finalGradeCalculator', () => ({
+                nilaiTugas: null, bobotTugas: 20, nilaiUTS: null, bobotUTS: 30, nilaiUAS: null, bobotUAS: 50,
+                finalGrade: null, letterGrade: '-', neededUAS: null, loading: false, targetGrade: 80,
+                isValidWeights() { const t = (parseFloat(this.bobotTugas) || 0) + (parseFloat(this.bobotUTS) || 0) + (parseFloat(this.bobotUAS) || 0); return Math.abs(t - 100) < 0.01; },
+                calculateFinalGrade() { if (!this.isValidWeights()) { this.$dispatch('show-toast', { message: 'Total bobot harus 100%.' }); return; } this.loading = true; this.finalGrade = null; this.letterGrade = '-'; setTimeout(() => { const t=parseFloat(this.nilaiTugas)||0; const ut=parseFloat(this.nilaiUTS)||0; const ua=parseFloat(this.nilaiUAS)||0; const bt=parseFloat(this.bobotTugas)/100||0; const bu=parseFloat(this.bobotUTS)/100||0; const ba=parseFloat(this.bobotUAS)/100||0; if(isNaN(t)||isNaN(ut)||isNaN(ua)||isNaN(bt)||isNaN(bu)||isNaN(ba)){this.loading=false; this.$dispatch('show-toast', { message: 'Input nilai/bobot tidak valid.' }); return;} this.finalGrade=(t*bt)+(ut*bu)+(ua*ba); this.letterGrade=valueToGrade(this.finalGrade); this.loading=false; }, 300); },
+                calculateNeededUAS() { const target = parseFloat(this.targetGrade); if (isNaN(target)||target<0||target>100){ this.$dispatch('show-toast', { message: 'Target nilai (0-100) tidak valid.' }); return;} const t=parseFloat(this.nilaiTugas)||0; const ut=parseFloat(this.nilaiUTS)||0; const bt=parseFloat(this.bobotTugas)/100||0; const bu=parseFloat(this.bobotUTS)/100||0; const ba=parseFloat(this.bobotUAS)/100||0; if(ba<=0){ this.$dispatch('show-toast', { message: 'Bobot UAS harus lebih dari 0.' }); this.neededUAS=null;return;} const cs=(t*bt)+(ut*bu); const nfUAS=target-cs; this.neededUAS=nfUAS/ba; }
+            }));
+
+            Alpine.data('gpaCalculator', () => ({
+                courses: [], semesterIP: null, previousIPK: null, previousSKS: null,
+                cumulativeIPK: null, totalSKS: null, ipError: '', loading: false,
+                init() { this.loadFromLocalStorage(); this.$watch('courses',()=>this.saveGpaData(),{deep:true}); this.$watch('previousIPK',()=>this.saveGpaData()); this.$watch('previousSKS',()=>this.saveGpaData()); if(this.courses.length>0)this.$nextTick(()=>this.calculateIP()); if(this.semesterIP!==null&&this.previousIPK!==null&&this.previousSKS!==null)this.$nextTick(()=>this.calculateIPK()); },
+                addCourse() { this.courses.push({ name: '', sks: 3, grade: 'A' }); },
+                removeCourse(index) { this.courses.splice(index, 1); this.calculateIP(); if(this.previousIPK !== null && this.previousSKS !== null) this.calculateIPK(); },
+                calculateIP() { this.loading = true; this.ipError = ''; this.semesterIP = null; setTimeout(() => { let score=0; let sksTotal=0; let valid=true; if (this.courses.length === 0) { this.loading=false; this.semesterIP=null; if(this.previousIPK!==null&&this.previousSKS!==null) this.calculateIPK(); else this.cumulativeIPK=null; return; } for(const c of this.courses){const s=parseInt(c.sks,10);const gv=gradeToValue(c.grade); if(isNaN(s)||s<=0){this.ipError=`SKS invalid: "${c.name||'??'}".`;valid=false;break;} score+=gv*s; sksTotal+=s;} if(valid){this.semesterIP=(sksTotal>0)?(score/sksTotal):null; if(this.previousIPK!==null&&this.previousSKS!==null)this.calculateIPK();} else {this.semesterIP=null; this.cumulativeIPK=null;} this.loading = false; }, 300); },
+                calculateIPK() { const pIPK=parseFloat(this.previousIPK); const pSKS=parseInt(this.previousSKS,10); const cIP=parseFloat(this.semesterIP); let cSKS=0; let valid=true; if(isNaN(pIPK)||isNaN(pSKS)||isNaN(cIP)||this.semesterIP===null||pSKS<0){this.cumulativeIPK=null;this.totalSKS=isNaN(pSKS)?null:pSKS;return;} for(const c of this.courses){const s=parseInt(c.sks,10);if(!isNaN(s)&&s>0){cSKS+=s;}else{valid=false;break;}} if(!valid){this.cumulativeIPK=null;this.totalSKS=pSKS;this.ipError="SKS semester ini invalid.";} else if(cSKS<=0){this.cumulativeIPK=pIPK;this.totalSKS=pSKS;} else{const totalScore=(pIPK*pSKS)+(cIP*cSKS);this.totalSKS=pSKS+cSKS;this.cumulativeIPK=this.totalSKS>0?totalScore/this.totalSKS:null;} },
+                saveGpaData() { localStorage.setItem('gpaData', JSON.stringify({ courses: this.courses, previousIPK: this.previousIPK, previousSKS: this.previousSKS })); },
+                loadFromLocalStorage() { const saved = localStorage.getItem('gpaData'); if (saved) { try { const d = JSON.parse(saved); this.courses = d.courses || []; this.previousIPK = d.previousIPK || null; this.previousSKS = d.previousSKS || null; } catch(e) { console.error("Error loading GPA data:", e); this.courses=[];this.previousIPK=null;this.previousSKS=null; } } }
+            }));
+
+            Alpine.data('ppdbCalculator', () => ({
+                nilaiRapor: null, nilaiASPD: null, akreditasiSekolah: 95,
+                nilaiGabungan: null, kontribusiRapor: null, kontribusiASPD: null, kontribusiAkreditasi: null, loading: false,
+                calculateNilaiGabungan() {
+                    this.loading = true; this.nilaiGabungan = null; this.kontribusiRapor = null; this.kontribusiASPD = null; this.kontribusiAkreditasi = null;
+                    setTimeout(() => {
+                        const rapor = parseFloat(this.nilaiRapor); const aspd = parseFloat(this.nilaiASPD); const akreditasi = parseInt(this.akreditasiSekolah, 10);
+                        if (isNaN(rapor) || rapor < 0 || rapor > 100) { this.loading=false; this.$dispatch('show-toast',{message:'Masukkan Nilai Rapor (0-100) yang valid dulu.'}); this.nilaiGabungan=null; this.kontribusiRapor=null; this.kontribusiASPD=null; this.kontribusiAkreditasi=null; return; }
+                        if (isNaN(aspd) || aspd < 0 || aspd > 100 || isNaN(akreditasi)) { this.loading=false; this.$dispatch('show-toast',{message:'Nilai ASPD/Akreditasi tidak valid.'}); return; } // Added range check for ASPD
+                        this.kontribusiRapor=rapor*0.40; this.kontribusiASPD=aspd*0.55; this.kontribusiAkreditasi=(akreditasi*4)*0.05; this.nilaiGabungan=this.kontribusiRapor+this.kontribusiASPD+this.kontribusiAkreditasi; this.loading=false;
+                    }, 50);
+                }
+            }));
+
+            Alpine.data('gradeConverter', () => ({
+                numericGradeInput: null, letterGradeOutput: '-',
+                convertGrade() { this.letterGradeOutput = valueToGrade(this.numericGradeInput); }
+            }));
+
+        }); // End of alpine:init listener
     </script>
-
-    <script src="script.js" defer></script>
-
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased" x-data="appSetup()" x-init="init()">
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased"
+      x-data="appSetup"
+      @scroll.window="showBackToTop = (window.scrollY > 200)"
+      @show-toast.window="showToast($event.detail.message, $event.detail.duration)">
+
     <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 transition-colors duration-300">
         <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-indigo-600 dark:text-indigo-400">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-indigo-600 dark:text-indigo-400"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /> </svg>
                 <h1 class="text-2xl font-space font-bold text-gray-800 dark:text-white">Pintar<span class="text-indigo-600">Hitung</span></h1>
             </div>
             <div class="flex items-center space-x-4">
-                 <button @click="toggleDarkMode()" aria-label="Toggle Dark Mode" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <button @click="window.toggleDarkMode()" aria-label="Toggle Dark Mode" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                     <svg x-show="!isDark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" /> </svg>
-                    <svg x-show="isDark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" style="display: none;"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-6.364-.386 1.591-1.591M3 12h2.25m.386-6.364 1.591 1.591M12 6.75A5.25 5.25 0 0 0 6.75 12a5.25 5.25 0 0 0 5.25 5.25a5.25 5.25 0 0 0 5.25-5.25A5.25 5.25 0 0 0 12 6.75Z" /> </svg>
-                 </button>
+                    <svg x-show="isDark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-6.364-.386 1.591-1.591M3 12h2.25m.386-6.364 1.591 1.591M12 6.75A5.25 5.25 0 0 0 6.75 12a5.25 5.25 0 0 0 5.25 5.25a5.25 5.25 0 0 0 5.25-5.25A5.25 5.25 0 0 0 12 6.75Z" /> </svg>
+                </button>
                 <div class="hidden md:flex space-x-6">
-                    <a href="#kalkulator-nilai-akhir" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Nilai Akhir</a>
-                    <a href="#kalkulator-ipk" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">IP/IPK</a>
-                    <a href="#kalkulator-ppdb" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">PPDB DIY</a>
-                    <a href="#konversi-nilai" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Konversi Nilai</a>
-                    <a href="#target-nilai" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Target Nilai</a>
-                 </div>
-                 <button @click="isMobileMenuOpen = !isMobileMenuOpen" class="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" aria-controls="mobile-menu" :aria-expanded="isMobileMenuOpen.toString()">
-                     <span class="sr-only">Buka menu</span>
-                     <svg x-show="!isMobileMenuOpen" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /> </svg>
-                     <svg x-show="isMobileMenuOpen" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" style="display: none;"> <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> </svg>
-                 </button>
-            </div>
+                    <a href="#kalkulator-nilai-akhir" class="nav-link">Nilai Akhir</a>
+                    <a href="#kalkulator-ipk" class="nav-link">IP/IPK</a>
+                    <a href="#kalkulator-ppdb" class="nav-link">PPDB DIY</a>
+                    <a href="#konversi-nilai" class="nav-link">Konversi Nilai</a>
+                    <a href="#target-nilai" class="nav-link">Target Nilai</a>
+                </div>
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Toggle Menu">
+                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /> </svg>
+                </button>
+           </div>
         </nav>
-        <div x-show="isMobileMenuOpen"
-             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-             class="md:hidden bg-white dark:bg-gray-800 p-4 space-y-2 absolute w-full shadow-lg border-t border-gray-200 dark:border-gray-700"
-             id="mobile-menu" style="display: none;" @click.away="isMobileMenuOpen = false">
-             <a href="#kalkulator-nilai-akhir" @click="isMobileMenuOpen = false" class="block text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3 py-2 rounded-md text-base font-medium">Nilai Akhir</a>
-             <a href="#kalkulator-ipk" @click="isMobileMenuOpen = false" class="block text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3 py-2 rounded-md text-base font-medium">IP/IPK</a>
-             <a href="#kalkulator-ppdb" @click="isMobileMenuOpen = false" class="block text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3 py-2 rounded-md text-base font-medium">PPDB DIY</a>
-             <a href="#konversi-nilai" @click="isMobileMenuOpen = false" class="block text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3 py-2 rounded-md text-base font-medium">Konversi Nilai</a>
-             <a href="#target-nilai" @click="isMobileMenuOpen = false" class="block text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition px-3 py-2 rounded-md text-base font-medium">Target Nilai</a>
+        <div :class="{ 'block': mobileMenuOpen, 'hidden': !mobileMenuOpen }" class="md:hidden bg-white dark:bg-gray-800 p-4 space-y-2 absolute top-full left-0 right-0 shadow-md z-40">
+            <a href="#kalkulator-nilai-akhir" @click="mobileMenuOpen = false" class="nav-link-mobile">Nilai Akhir</a>
+            <a href="#kalkulator-ipk" @click="mobileMenuOpen = false" class="nav-link-mobile">IP/IPK</a>
+            <a href="#kalkulator-ppdb" @click="mobileMenuOpen = false" class="nav-link-mobile">PPDB DIY</a>
+            <a href="#konversi-nilai" @click="mobileMenuOpen = false" class="nav-link-mobile">Konversi Nilai</a>
+            <a href="#target-nilai" @click="mobileMenuOpen = false" class="nav-link-mobile">Target Nilai</a>
         </div>
     </header>
 
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-12">
-        <section id="kalkulator-nilai-akhir" x-data="finalGradeCalculator()" data-aos="fade-up">
+
+        <section id="kalkulator-nilai-akhir" x-data="finalGradeCalculator" data-aos="fade-up">
             <div class="card">
-                <div class="flex items-center mb-6 space-x-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-indigo-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /> </svg>
-                    <h2 class="text-3xl font-space">Kalkulator Nilai Akhir Mapel</h2>
-                </div>
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex items-center mb-6 space-x-3"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-indigo-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /> </svg> <h2 class="text-3xl font-space">Kalkulator Nilai Akhir Mapel</h2> </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-4">
-                        <div> <label for="nilai_tugas" class="label-input">Nilai Tugas (Rata-rata)</label> <input type="number" id="nilai_tugas" x-model.number="nilaiTugas" placeholder="0-100" class="input-field"> </div>
-                        <div> <label for="bobot_tugas" class="label-input">Bobot Tugas (%)</label> <input type="number" id="bobot_tugas" x-model.number="bobotTugas" placeholder="mis: 20" class="input-field"> </div>
-                        <div> <label for="nilai_uts" class="label-input">Nilai UTS</label> <input type="number" id="nilai_uts" x-model.number="nilaiUTS" placeholder="0-100" class="input-field"> </div>
-                        <div> <label for="bobot_uts" class="label-input">Bobot UTS (%)</label> <input type="number" id="bobot_uts" x-model.number="bobotUTS" placeholder="mis: 30" class="input-field"> </div>
-                        <div> <label for="nilai_uas" class="label-input">Nilai UAS</label> <input type="number" id="nilai_uas" x-model.number="nilaiUAS" placeholder="0-100" class="input-field"> </div>
-                        <div> <label for="bobot_uas" class="label-input">Bobot UAS (%)</label> <input type="number" id="bobot_uas" x-model.number="bobotUAS" placeholder="mis: 50" class="input-field"> </div>
+                        <div> <label for="fn_nilai_tugas" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai Tugas</label> <input type="number" id="fn_nilai_tugas" x-model.number="nilaiTugas" placeholder="0-100" class="input-field"> </div>
+                        <div> <label for="fn_bobot_tugas" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bobot Tugas (%)</label> <input type="number" id="fn_bobot_tugas" x-model.number="bobotTugas" placeholder="mis: 20" class="input-field"> </div>
+                        <div> <label for="fn_nilai_uts" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai UTS</label> <input type="number" id="fn_nilai_uts" x-model.number="nilaiUTS" placeholder="0-100" class="input-field"> </div>
+                        <div> <label for="fn_bobot_uts" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bobot UTS (%)</label> <input type="number" id="fn_bobot_uts" x-model.number="bobotUTS" placeholder="mis: 30" class="input-field"> </div>
+                        <div> <label for="fn_nilai_uas" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai UAS</label> <input type="number" id="fn_nilai_uas" x-model.number="nilaiUAS" placeholder="0-100" class="input-field"> </div>
+                        <div> <label for="fn_bobot_uas" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bobot UAS (%)</label> <input type="number" id="fn_bobot_uas" x-model.number="bobotUAS" placeholder="mis: 50" class="input-field"> </div>
                         <div class="pt-2">
-                            <button @click="calculateFinalGrade()" class="btn w-full" :disabled="loading || !isValidWeights()">
-                                <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg>
+                            <button @click="calculateFinalGrade()" class="btn w-full" :disabled="!isValidWeights() || loading">
                                 <span x-show="!loading">Hitung Nilai Akhir</span>
-                                <span x-show="loading" style="display: none;">Menghitung...</span>
+                                <span x-show="loading" class="flex items-center justify-center"> Menghitung... <svg class="animate-spin ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> </span>
                             </button>
                             <p x-show="!isValidWeights()" class="text-red-500 text-sm mt-2">Total bobot harus 100%.</p>
                         </div>
@@ -115,146 +172,120 @@
                             <p class="text-5xl font-bold text-indigo-600 dark:text-indigo-400" x-text="formatNumber(finalGrade, 2)"></p>
                             <p class="text-2xl font-semibold text-gray-700 dark:text-gray-300 mt-1" x-text="letterGrade"></p>
                         </div>
-                        <div x-show="finalGrade === null && !loading" class="text-gray-500 dark:text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto mb-2"> <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /> </svg>
-                             Masukkan nilai dan bobot untuk melihat hasil.
-                        </div>
-                        <div class="w-full pt-4 border-t border-gray-200 dark:border-gray-700 mt-4" x-data="{ targetGrade: 80 }">
+                        <div x-show="finalGrade === null" class="text-gray-500 dark:text-gray-400"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto mb-2"> <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /> </svg> Masukkan nilai & bobot. </div>
+                        <div class="w-full pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
                             <h4 class="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">Target Nilai UAS</h4>
-                            <label for="target_grade" class="label-input">Target Nilai Akhir</label>
-                            <input type="number" id="target_grade" x-model.number="targetGrade" placeholder="mis: 85" class="input-field mb-2 !py-2 text-sm">
-                            <button @click="$dispatch('calculate-needed-uas', { target: targetGrade })" class="btn-secondary w-full text-sm !py-2" :disabled="!nilaiTugas || !nilaiUTS || !bobotTugas || !bobotUTS || !bobotUAS || bobotUAS <= 0">Hitung Min. UAS</button>
+                            <label for="fn_target_grade" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Nilai Akhir</label>
+                            <input type="number" id="fn_target_grade" x-model.number="targetGrade" placeholder="mis: 85" class="input-field mb-2 !py-2 text-sm">
+                            <button @click="calculateNeededUAS()" class="btn-secondary w-full text-sm !py-2"
+                                    :disabled="!nilaiTugas || !nilaiUTS || !bobotTugas || !bobotUTS || !bobotUAS || bobotUAS <= 0">
+                                Hitung Min. UAS
+                            </button>
                             <div x-show="neededUAS !== null" class="mt-2 text-center">
                                 <p class="text-sm text-gray-600 dark:text-gray-400">Nilai UAS minimum:</p>
-                                <p class="text-xl font-bold" :class="neededUAS > 100 ? 'text-red-500' : 'text-green-600 dark:text-green-400'" x-text="formatNumber(neededUAS, 2)"></p>
+                                <p class="text-xl font-bold" :class="neededUAS > 100 ? 'text-red-500' : 'text-green-600 dark:text-green-400'"
+                                   x-text="neededUAS !== null ? formatNumber(neededUAS, 2) : '-'"></p>
                                 <p x-show="neededUAS > 100" class="text-xs text-red-500">(Target tidak mungkin tercapai)</p>
                             </div>
-                            <div x-show="neededUAS === null && (nilaiTugas && nilaiUTS && bobotTugas && bobotUTS && bobotUAS > 0)" class="mt-2 text-sm text-gray-500">Tekan tombol untuk menghitung.</div>
+                            <div x-show="neededUAS === null && (nilaiTugas && nilaiUTS && bobotTugas && bobotUTS && bobotUAS > 0)"
+                                 class="mt-2 text-sm text-gray-500">Tekan tombol untuk menghitung.</div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="kalkulator-ipk" x-data="gpaCalculator" data-aos="fade-up">
+             <div class="card">
+                 <div class="flex items-center mb-6 space-x-3"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-teal-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /> </svg> <h2 class="text-3xl font-space">Kalkulator IP & IPK</h2> </div>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                     <div class="lg:col-span-1 space-y-4">
+                         <h3 class="text-xl font-semibold">Daftar Mata Kuliah Semester Ini</h3>
+                         <template x-for="(course, index) in courses" :key="index">
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center border dark:border-gray-700 p-3 rounded-md">
+                                <div class="sm:col-span-5"> <label :for="'course_name_' + index" class="sr-only">Nama</label> <input type="text" :id="'course_name_' + index" x-model="course.name" placeholder="Nama Mata Kuliah" class="input-field !py-2 text-sm"> </div>
+                                <div class="sm:col-span-2"> <label :for="'course_sks_' + index" class="sr-only">SKS</label> <input type="number" :id="'course_sks_' + index" x-model.number="course.sks" placeholder="SKS" min="1" class="input-field !py-2 text-sm"> </div>
+                                <div class="sm:col-span-3"> <label :for="'course_grade_' + index" class="sr-only">Nilai</label> <select :id="'course_grade_' + index" x-model="course.grade" class="input-field !py-2 text-sm"> <option value="A">A</option> <option value="A-">A-</option> <option value="B+">B+</option> <option value="B">B</option> <option value="B-">B-</option> <option value="C+">C+</option> <option value="C">C</option> <option value="D">D</option> <option value="E">E</option> </select> </div>
+                                <div class="sm:col-span-2 flex justify-end items-center"> <button @click="removeCourse(index)" class="p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 transition rounded-full hover:bg-red-100 dark:hover:bg-red-900/50" aria-label="Hapus"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"> <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /> </svg> </button> </div>
+                             </div>
+                         </template>
+                         <div class="flex space-x-3 pt-2">
+                             <button @click="addCourse()" class="btn-secondary flex-grow"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /> </svg> Tambah Matkul </button>
+                             <button @click="calculateIP()" class="btn flex-grow" :disabled="courses.length === 0 || loading">
+                                <span x-show="!loading">Hitung IP Semester</span>
+                                <span x-show="loading" class="flex items-center justify-center"> Menghitung... <svg class="animate-spin ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> </span>
+                            </button>
+                         </div>
+                         <p x-show="ipError" class="text-red-500 text-sm" x-text="ipError"></p>
+                         <div class="pt-4 border-t dark:border-gray-700">
+                            <h4 class="text-lg font-semibold mb-2">Hitung IPK Kumulatif</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div> <label for="prev_ipk" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">IPK Sblm</label> <input type="number" step="0.01" id="prev_ipk" x-model.number="previousIPK" placeholder="mis: 3.50" class="input-field"> </div>
+                                <div> <label for="prev_sks" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total SKS Sblm</label> <input type="number" id="prev_sks" x-model.number="previousSKS" placeholder="mis: 100" class="input-field"> </div>
+                             </div>
+                             <button @click="calculateIPK()" class="btn w-full mt-3" :disabled="semesterIP === null || previousIPK === null || previousSKS === null || previousSKS < 0"> Hitung IPK </button>
+                         </div>
+                     </div>
+                     <div class="lg:col-span-1 space-y-6 flex flex-col">
+                        <div class="bg-teal-50 dark:bg-teal-900/30 p-6 rounded-lg text-center"> <h3 class="text-xl font-semibold text-teal-800 dark:text-teal-200 mb-2">Hasil Semester Ini</h3> <p class="text-gray-600 dark:text-gray-400">IP Semester (IPS):</p> <p class="text-5xl font-bold text-teal-600 dark:text-teal-400" x-text="formatNumber(semesterIP, 2) ?? '--'"></p> </div>
+                        <div class="bg-purple-50 dark:bg-purple-900/30 p-6 rounded-lg text-center"> <h3 class="text-xl font-semibold text-purple-800 dark:text-purple-200 mb-2">Hasil Kumulatif</h3> <p class="text-gray-600 dark:text-gray-400">IP Kumulatif (IPK):</p> <p class="text-5xl font-bold text-purple-600 dark:text-purple-400" x-text="formatNumber(cumulativeIPK, 2) ?? '--'"></p> <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total SKS: <span x-text="totalSKS ?? '--'"></span></p> </div>
                         </div>
+                 </div>
+             </div>
+        </section>
+
+        <section id="kalkulator-ppdb" x-data="ppdbCalculator" data-aos="fade-up">
+             <div class="card">
+                 <div class="flex items-center mb-6 space-x-3"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-orange-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /> <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /> </svg> <h2 class="text-3xl font-space">Kalkulator Nilai Gabungan PPDB DIY (ASPD)</h2> </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                     <div class="space-y-4">
+                         <div> <label for="ppdb_nilai_rapor" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rata-rata Nilai Rapor (Sem 1-5)</label> <input type="number" step="0.01" id="ppdb_nilai_rapor" x-model.number="nilaiRapor" placeholder="mis: 85.50" class="input-field"> </div>
+                         <div> <label for="ppdb_nilai_aspd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai ASPD (Rata-rata 3 mapel)</label> <input type="number" step="0.01" id="ppdb_nilai_aspd" x-model.number="nilaiASPD" placeholder="mis: 78.25" class="input-field"> </div>
+                         <div> <label for="ppdb_akreditasi" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Akreditasi Sekolah Asal</label> <select id="ppdb_akreditasi" x-model.number="akreditasiSekolah" class="input-field"> <option value="95">A (Nilai 95)</option> <option value="85">B (Nilai 85)</option> <option value="75">C (Nilai 75)</option> <option value="0">Belum Terakreditasi (Nilai 0)</option> </select> </div>
+                         <div class="pt-2">
+                             <button @click="calculateNilaiGabungan()" class="btn w-full" :disabled="!nilaiRapor || !nilaiASPD || akreditasiSekolah === null || loading">
+                                <span x-show="!loading">Hitung Nilai Gabungan</span>
+                                <span x-show="loading" class="flex items-center justify-center"> Menghitung... <svg class="animate-spin ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> </span>
+                             </button>
+                         </div>
+                    </div>
+                     <div class="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-lg space-y-4">
+                         <h3 class="text-xl font-semibold text-orange-800 dark:text-orange-200 text-center">Hasil Nilai Gabungan</h3>
+                         <div class="text-center" x-show="nilaiGabungan !== null">
+                             <p class="text-5xl font-bold text-orange-600 dark:text-orange-400" x-text="nilaiGabungan !== null ? formatNumber(nilaiGabungan, 3) : '-'"></p>
+                             <div class="text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-1">
+                                 <p>Kontribusi Rapor (40%): <span x-text="formatNumber(kontribusiRapor, 3)"></span></p>
+                                 <p>Kontribusi ASPD (55%): <span x-text="formatNumber(kontribusiASPD, 3)"></span></p>
+                                 <p>Kontribusi Akreditasi (5%): <span x-text="formatNumber(kontribusiAkreditasi, 3)"></span></p>
+                             </div>
+                         </div>
+                         <div x-show="nilaiGabungan === null" class="text-center text-gray-500 dark:text-gray-400 py-8"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 mx-auto mb-2"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75c0-.231-.035-.454-.1-.664M6.75 7.5H18a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25H6.75a2.25 2.25 0 0 1-2.25-2.25v-9a2.25 2.25 0 0 1 2.25-2.25Z" /> </svg> Masukkan nilai. </div>
+                         <div class="pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
+                             <h4 class="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">Simulasi Perubahan Nilai</h4>
+                             <label for="ppdb_sim_aspd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ubah Nilai ASPD:</label>
+                             <input type="range" id="ppdb_sim_aspd" x-model.number="nilaiASPD" @input="calculateNilaiGabungan()" min="0" max="100" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-orange-500 mt-1">
+                             <span class="text-sm text-gray-600 dark:text-gray-400">Nilai ASPD: <strong x-text="nilaiASPD ?? '--'"></strong></span>
+                         </div>
                     </div>
                  </div>
             </div>
         </section>
 
-        <section id="kalkulator-ipk" x-data="gpaCalculator()" data-aos="fade-up">
-           <div class="card">
-                <div class="flex items-center mb-6 space-x-3">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-teal-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /> </svg>
-                   <h2 class="text-3xl font-space">Kalkulator IP & IPK</h2>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                   <div class="lg:col-span-2 space-y-4">
-                       <h3 class="text-xl font-semibold">Daftar Mata Kuliah Semester Ini</h3>
-                       <template x-for="(course, index) in courses" :key="index">
-                           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center border dark:border-gray-700 p-3 rounded-md">
-                                <div class="sm:col-span-5"> <label :for="'course_name_' + index" class="sr-only">Nama</label> <input type="text" :id="'course_name_' + index" x-model="course.name" placeholder="Nama Mata Kuliah" class="input-field !py-2 text-sm"> </div>
-                                <div class="sm:col-span-2"> <label :for="'course_sks_' + index" class="sr-only">SKS</label> <input type="number" :id="'course_sks_' + index" x-model.number="course.sks" placeholder="SKS" min="1" class="input-field !py-2 text-sm"> </div>
-                                <div class="sm:col-span-3"> <label :for="'course_grade_' + index" class="sr-only">Nilai</label> <select :id="'course_grade_' + index" x-model="course.grade" class="input-field !py-2 text-sm"> <option value="">-- Pilih Nilai --</option> <option value="A">A (4.0)</option> <option value="A-">A- (3.7)</option> <option value="B+">B+ (3.3)</option> <option value="B">B (3.0)</option> <option value="B-">B- (2.7)</option> <option value="C+">C+ (2.3)</option> <option value="C">C (2.0)</option> <option value="D">D (1.0)</option> <option value="E">E (0.0)</option> </select> </div>
-                                <div class="sm:col-span-2 flex justify-end items-center"> <button @click="removeCourse(index)" class="p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 transition rounded-full hover:bg-red-100 dark:hover:bg-red-900/50" aria-label="Hapus"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"> <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /> </svg> </button> </div>
-                           </div>
-                       </template>
-                       <div class="flex space-x-3 pt-2">
-                           <button @click="addCourse()" class="btn-secondary flex-grow"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /> </svg> Tambah Matkul </button>
-                           <button @click="calculateIP()" class="btn flex-grow" :disabled="loading || courses.length === 0 || !allCoursesValid()">
-                                <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg>
-                                <span x-show="!loading">Hitung IP Semester</span>
-                                <span x-show="loading" style="display: none;">Menghitung...</span>
-                            </button>
-                       </div>
-                       <p x-show="ipError" class="text-red-500 text-sm" x-text="ipError"></p>
-                       <div class="pt-4 border-t dark:border-gray-700">
-                           <h4 class="text-lg font-semibold mb-2">Hitung IPK Kumulatif</h4>
-                           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div> <label for="prev_ipk" class="label-input">IPK Sebelumnya</label> <input type="number" step="0.01" id="prev_ipk" x-model.number="previousIPK" placeholder="mis: 3.50" class="input-field"> </div>
-                               <div> <label for="prev_sks" class="label-input">Total SKS Sebelumnya</label> <input type="number" id="prev_sks" x-model.number="previousSKS" placeholder="mis: 100" min="0" class="input-field"> </div>
-                           </div>
-                           <button @click="calculateIPK()" class="btn w-full mt-3" :disabled="semesterIP === null || previousIPK === null || previousSKS === null"> Hitung IPK Kumulatif </button>
-                       </div>
-                   </div>
-                   <div class="space-y-6 flex flex-col">
-                       <div class="bg-teal-50 dark:bg-teal-900/30 p-6 rounded-lg text-center">
-                           <h3 class="text-xl font-semibold text-teal-800 dark:text-teal-200 mb-2">Hasil Semester Ini</h3>
-                           <p class="text-gray-600 dark:text-gray-400">IP Semester (IPS):</p>
-                           <p class="text-5xl font-bold text-teal-600 dark:text-teal-400" x-text="formatNumber(semesterIP, 2) ?? '--'"></p>
-                       </div>
-                       <div class="bg-purple-50 dark:bg-purple-900/30 p-6 rounded-lg text-center">
-                           <h3 class="text-xl font-semibold text-purple-800 dark:text-purple-200 mb-2">Hasil Kumulatif</h3>
-                           <p class="text-gray-600 dark:text-gray-400">IP Kumulatif (IPK):</p>
-                           <p class="text-5xl font-bold text-purple-600 dark:text-purple-400" x-text="formatNumber(cumulativeIPK, 2) ?? '--'"></p>
-                           <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total SKS: <span x-text="totalSKS ?? '--'"></span></p>
-                       </div>
-                       <div class="flex-grow">
-                           <h3 class="text-lg font-semibold mb-2 text-center">Grafik Perkembangan IP/IPK</h3>
-                           <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow relative h-64 md:h-80"> <canvas id="ipkChart"></canvas> </div>
-                           <div class="text-center mt-2"> <button @click="clearHistory()" class="text-xs text-red-500 hover:underline" :disabled="ipkHistory.length === 0"> Hapus Riwayat Grafik </button> </div>
-                       </div>
-                   </div>
-                </div>
-           </div>
-        </section>
-
-        <section id="kalkulator-ppdb" x-data="ppdbCalculator()" data-aos="fade-up">
-           <div class="card">
-                <div class="flex items-center mb-6 space-x-3">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-orange-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /> <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /> </svg>
-                   <h2 class="text-3xl font-space">Kalkulator Nilai Gabungan PPDB DIY (ASPD)</h2>
-                </div>
-               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                   <div class="space-y-4">
-                        <div> <label for="nilai_rapor" class="label-input">Rata-rata Nilai Rapor (Sem 1-5)</label> <input type="number" step="0.01" id="nilai_rapor" x-model.number="nilaiRapor" placeholder="mis: 85.50" class="input-field"> </div>
-                        <div> <label for="nilai_aspd" class="label-input">Nilai ASPD (Rata-rata 3 mapel)</label> <input type="number" step="0.01" id="nilai_aspd" x-model.number="nilaiASPD" placeholder="mis: 78.25" class="input-field"> </div>
-                        <div> <label for="akreditasi" class="label-input">Akreditasi Sekolah Asal</label> <select id="akreditasi" x-model.number="akreditasiSekolah" class="input-field"> <option value="95">A (Nilai 95)</option> <option value="85">B (Nilai 85)</option> <option value="75">C (Nilai 75)</option> <option value="70">Belum/Tidak Terakreditasi (Nilai 70)</option> </select> </div>
-                        <div class="pt-2">
-                            <button @click="calculateNilaiGabungan()" class="btn w-full" :disabled="loading || nilaiRapor === null || nilaiASPD === null || akreditasiSekolah === null">
-                                <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg>
-                                <span x-show="!loading">Hitung Nilai Gabungan</span>
-                                <span x-show="loading" style="display: none;">Menghitung...</span>
-                            </button>
-                        </div>
-                   </div>
-                   <div class="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-lg space-y-4">
-                        <h3 class="text-xl font-semibold text-orange-800 dark:text-orange-200 text-center">Hasil Nilai Gabungan</h3>
-                       <div class="text-center" x-show="nilaiGabungan !== null">
-                            <p class="text-5xl font-bold text-orange-600 dark:text-orange-400" x-text="formatNumber(nilaiGabungan, 3)"></p>
-                            <div class="text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-1">
-                               <p>Kontribusi Rapor (40%): <span x-text="formatNumber(kontribusiRapor, 3)"></span></p>
-                               <p>Kontribusi ASPD (55%): <span x-text="formatNumber(kontribusiASPD, 3)"></span></p>
-                               <p>Kontribusi Akreditasi (5%): <span x-text="formatNumber(kontribusiAkreditasi, 3)"></span></p>
-                               <p class="italic text-[10px] mt-1">(Rumus: (Rapor x 0.4) + (ASPD x 0.55) + (Nilai Akreditasi x 4 x 0.05))</p>
-                            </div>
-                       </div>
-                       <div x-show="nilaiGabungan === null && !loading" class="text-center text-gray-500 dark:text-gray-400 py-8">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 mx-auto mb-2"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75c0-.231-.035-.454-.1-.664M6.75 7.5H18a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25H6.75a2.25 2.25 0 0 1-2.25-2.25v-9a2.25 2.25 0 0 1 2.25-2.25Z" /> </svg>
-                            Masukkan nilai untuk menghitung.
-                       </div>
-                       <div class="pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
-                            <h4 class="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">Simulasi Perubahan Nilai</h4>
-                            <label for="sim_aspd" class="label-input">Ubah Nilai ASPD:</label>
-                            <input type="range" id="sim_aspd" x-model.number="nilaiASPD" @input="calculateNilaiGabungan()" min="0" max="100" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-orange-500 mt-1" :disabled="loading">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Nilai ASPD: <strong x-text="nilaiASPD"></strong></span>
-                        </div>
-                   </div>
-               </div>
-           </div>
-        </section>
-
-        <section id="konversi-nilai" data-aos="fade-up">
-           <div class="card">
-                <div class="flex items-center mb-6 space-x-3">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-cyan-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /> </svg>
-                   <h2 class="text-3xl font-space">Konversi Nilai Angka ke Huruf</h2>
-               </div>
-               <p class="text-gray-600 dark:text-gray-400">Fitur ini sedang dalam pengembangan.</p>
+        <section id="konversi-nilai" x-data="gradeConverter" data-aos="fade-up">
+             <div class="card">
+                 <div class="flex items-center mb-6 space-x-3"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-cyan-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /> </svg> <h2 class="text-3xl font-space">Konversi Nilai Angka ke Huruf</h2> </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                     <div class="space-y-4"> <div> <label for="conv_numeric_grade" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai Angka (0-100)</label> <input type="number" id="conv_numeric_grade" x-model.number="numericGradeInput" @input="convertGrade()" placeholder="mis: 88" class="input-field"> </div> </div>
+                     <div class="bg-cyan-50 dark:bg-cyan-900/30 p-6 rounded-lg text-center"> <h3 class="text-xl font-semibold text-cyan-800 dark:text-cyan-200 mb-2">Hasil Konversi</h3> <p class="text-5xl font-bold text-cyan-600 dark:text-cyan-400" x-text="letterGradeOutput"></p> <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">(Skala Default)</p> </div>
+                 </div>
             </div>
         </section>
 
         <section id="target-nilai" data-aos="fade-up">
-           <div class="card">
-               <div class="flex items-center mb-6 space-x-3">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-lime-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12" /> </svg>
-                   <h2 class="text-3xl font-space">Kalkulator Target Nilai</h2>
-                </div>
-                <p class="text-gray-600 dark:text-gray-400">Fitur ini sedang dalam pengembangan.</p>
+             <div class="card">
+                 <div class="flex items-center mb-6 space-x-3"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-lime-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12" /> </svg> <h2 class="text-3xl font-space">Kalkulator Target Nilai</h2> </div>
+                 <p class="text-gray-600 dark:text-gray-400">Gunakan fitur <strong class="font-semibold text-gray-700 dark:text-gray-200">Target Nilai UAS</strong> yang tersedia pada <a href="#kalkulator-nilai-akhir" class="text-indigo-600 hover:underline dark:text-indigo-400">Kalkulator Nilai Akhir Mapel</a> di atas.</p>
+                 <p class="text-gray-600 dark:text-gray-400 mt-2">Fitur kalkulator target yang lebih umum belum tersedia.</p>
             </div>
         </section>
 
@@ -262,19 +293,26 @@
 
     <footer class="bg-gray-200 dark:bg-gray-800 mt-16 transition-colors duration-300">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-600 dark:text-gray-400 text-sm">
-            <p>&copy; <span x-text="new Date().getFullYear()"></span> PintarHitung. Dibuat dengan ❤️ dan kode.</p>
-            <p class="mt-1">Alat bantu visual untuk perencanaan nilai akademik.</p>
+             <p>&copy; <span x-text="new Date().getFullYear()"></span> PintarHitung. Dibuat dengan ❤️ dan kode.</p>
+             <p class="mt-1">Alat bantu visual untuk perencanaan nilai akademik.</p>
          </div>
-     </footer>
+    </footer>
 
-    <button x-show="showBackToTop"
-            @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-2"
-            class="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 z-40"
-            aria-label="Kembali ke atas" style="display: none;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"> <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /> </svg>
+    <button x-show="showBackToTop" @click="window.scrollTo({ top: 0, behavior: 'smooth' })" x-transition class="fixed bottom-5 right-5 p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 z-50" aria-label="Kembali ke atas">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /> </svg>
     </button>
 
-</body>
+    <div x-show="toastVisible"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform translate-y-full"
+         x-transition:enter-end="opacity-100 transform translate-y-0"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="opacity-100 transform translate-y-0"
+         x-transition:leave-end="opacity-0 transform translate-y-full"
+         class="fixed bottom-5 left-1/2 -translate-x-1/2 max-w-sm w-full mx-auto z-[60] px-4 py-3 rounded-lg shadow-lg text-white bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600"
+         x-text="toastMessage"
+         role="alert"
+         style="display: none;">
+        </div>
+    </body>
 </html>
