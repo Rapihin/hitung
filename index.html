@@ -91,13 +91,76 @@
             }));
 
             Alpine.data('ppdbCalculator', () => ({
-                nilaiRapor: null, nilaiASPD: null, akreditasiSekolah: 95,
-                nilaiGabungan: null, kontribusiRapor: null, kontribusiASPD: null, kontribusiAkreditasi: null, loading: false,
-                errors: { nilaiRapor: null, nilaiASPD: null },
-                validateInput(k,v,min,max,req=true){const val=parseFloat(v);if(req&&(v===null||String(v).trim()==='')){this.errors[k]='Wajib.';return false;}if(v!==null&&String(v).trim()!==''&&(isNaN(val)||val<min||val>max)){this.errors[k]=`Nilai ${min}-${max}.`;return false;}this.errors[k]=null;return true;},
-                validateAll(){let ok=true;this.errors={nilaiRapor:null,nilaiASPD:null};ok=this.validateInput('nilaiRapor',this.nilaiRapor,0,100)&&ok;ok=this.validateInput('nilaiASPD',this.nilaiASPD,0,100)&&ok;return ok;},
-                calculateNilaiGabungan(){this.nilaiGabungan=null;this.kontribusiRapor=null;this.kontribusiASPD=null;this.kontribusiAkreditasi=null;if(!this.validateAll())return;this.loading=true;setTimeout(()=>{const r=parseFloat(this.nilaiRapor);const a=parseFloat(this.nilaiASPD);const k=parseInt(this.akreditasiSekolah,10);this.kontribusiRapor=r*0.40;this.kontribusiASPD=a*0.55;this.kontribusiAkreditasi=(k*4)*0.05;this.nilaiGabungan=this.kontribusiRapor+this.kontribusiASPD+this.kontribusiAkreditasi;this.loading=false;},50);},
-                reset(){this.nilaiRapor=null;this.nilaiASPD=null;this.akreditasiSekolah=95;this.nilaiGabungan=null;this.kontribusiRapor=null;this.kontribusiASPD=null;this.kontribusiAkreditasi=null;this.loading=false;this.errors={nilaiRapor:null,nilaiASPD:null};}
+                // Sesuaikan inisialisasi, akreditasiSekolah sekarang numerik
+                nilaiRapor: null,
+                nilaiASPD: null,
+                akreditasiSekolah: null, // Ubah dari 95 menjadi null atau nilai default lain jika perlu
+                nilaiGabungan: null,
+                kontribusiRapor: null,
+                kontribusiASPD: null,
+                kontribusiAkreditasi: null,
+                loading: false,
+                // Tambahkan 'akreditasiSekolah' ke object errors
+                errors: { nilaiRapor: null, nilaiASPD: null, akreditasiSekolah: null }, // Tambahkan akreditasiSekolah
+
+                // Fungsi validateInput tetap sama, tapi perhatikan rentang min/max jika skala input berubah
+                validateInput(k, v, min, max, req = true) {
+                    const val = parseFloat(v);
+                    if (req && (v === null || String(v).trim() === '')) { this.errors[k] = 'Wajib.'; return false; }
+                    // PENTING: Jika skala Rapor/ASPD berubah (misal max 400/300), sesuaikan 'max' di sini atau saat memanggil fungsi
+                    if (v !== null && String(v).trim() !== '' && (isNaN(val) || val < min || val > max)) {
+                        this.errors[k] = `Nilai harus antara ${min}-${max}.`; return false;
+                    }
+                    this.errors[k] = null; return true;
+                },
+
+                validateAll() {
+                    let ok = true;
+                    // Reset semua error sebelum validasi ulang
+                    this.errors = { nilaiRapor: null, nilaiASPD: null, akreditasiSekolah: null };
+                    // Panggil validasi untuk semua input
+                    // Sesuaikan 'max' jika perlu agar sesuai dengan skala input sebenarnya
+                    ok = this.validateInput('nilaiRapor', this.nilaiRapor, 0, 400) && ok; // Contoh: max 400 untuk rapor?
+                    ok = this.validateInput('nilaiASPD', this.nilaiASPD, 0, 300) && ok; // Contoh: max 300 untuk ASPD?
+                    ok = this.validateInput('akreditasiSekolah', this.akreditasiSekolah, 0, 100) && ok; // Akreditasi 0-100
+                    return ok;
+                },
+
+                calculateNilaiGabungan() {
+                    this.nilaiGabungan = null; this.kontribusiRapor = null; this.kontribusiASPD = null; this.kontribusiAkreditasi = null;
+                    if (!this.validateAll()) return; // Hentikan jika validasi gagal
+
+                    this.loading = true;
+                    setTimeout(() => {
+                        // Ambil nilai dari model (pastikan sudah divalidasi)
+                        const rapor = parseFloat(this.nilaiRapor);
+                        const aspd = parseFloat(this.nilaiASPD);
+                        const akreditasi = parseFloat(this.akreditasiSekolah);
+
+                        // --- AWAL RUMUS BARU ---
+                        this.kontribusiRapor = rapor * 0.40;       // Rapor x 40%
+                        this.kontribusiASPD = aspd * 0.55;        // ASPD x 55%
+                        this.kontribusiAkreditasi = (akreditasi * 4) * 0.05; // (Akreditasi x 4) x 5%
+
+                        this.nilaiGabungan = this.kontribusiRapor + this.kontribusiASPD + this.kontribusiAkreditasi;
+                        // --- AKHIR RUMUS BARU ---
+
+                        this.loading = false;
+                    }, 50); // Sedikit delay untuk efek loading
+                },
+
+                reset() {
+                    this.nilaiRapor = null;
+                    this.nilaiASPD = null;
+                    this.akreditasiSekolah = null; // Reset nilai akreditasi
+                    this.nilaiGabungan = null;
+                    this.kontribusiRapor = null;
+                    this.kontribusiASPD = null;
+                    this.kontribusiAkreditasi = null;
+                    this.loading = false;
+                    // Reset semua error
+                    this.errors = { nilaiRapor: null, nilaiASPD: null, akreditasiSekolah: null };
+                }
             }));
 
             Alpine.data('gradeConverter', () => ({
@@ -314,28 +377,33 @@
              <div class="card">
                  <div class="flex items-center mb-6 space-x-3"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-orange-500"> <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /> <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /> </svg> <h2 class="text-3xl font-space">Kalkulator Nilai Gabungan PPDB DIY (ASPD)</h2> </div>
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                     <div class="space-y-4">
+                    <div class="space-y-4">
                         <div>
-                            <label for="ppdb_nilai_rapor" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rata-rata Nilai Rapor</label>
-                            <input type="number" step="0.01" id="ppdb_nilai_rapor" x-model.number="nilaiRapor" @input="validateInput('nilaiRapor', nilaiRapor, 0, 100)" placeholder="mis: 85.50" class="input-field" :class="{'input-error': errors.nilaiRapor}">
+                            <label for="ppdb_nilai_rapor" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rerata Nilai Rapor</label>
+                            <input type="number" step="any" id="ppdb_nilai_rapor" x-model.number="nilaiRapor" @input="validateInput('nilaiRapor', nilaiRapor, 0, 400)" placeholder="mis: 320" class="input-field" :class="{'input-error': errors.nilaiRapor}"> 
                             <p x-show="errors.nilaiRapor" x-text="errors.nilaiRapor" class="error-text"></p>
                         </div>
-                         <div>
+                        <div>
                             <label for="ppdb_nilai_aspd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai ASPD</label>
-                            <input type="number" step="0.01" id="ppdb_nilai_aspd" x-model.number="nilaiASPD" @input="validateInput('nilaiASPD', nilaiASPD, 0, 100)" placeholder="mis: 78.25" class="input-field" :class="{'input-error': errors.nilaiASPD}">
+                            <input type="number" step="any" id="ppdb_nilai_aspd" x-model.number="nilaiASPD" @input="validateInput('nilaiASPD', nilaiASPD, 0, 300)" placeholder="mis: 300" class="input-field" :class="{'input-error': errors.nilaiASPD}"> 
                             <p x-show="errors.nilaiASPD" x-text="errors.nilaiASPD" class="error-text"></p>
-                         </div>
-                         <div> <label for="ppdb_akreditasi" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Akreditasi Sekolah Asal</label> <select id="ppdb_akreditasi" x-model.number="akreditasiSekolah" class="input-field"> <option value="95">A (Nilai 95)</option> <option value="85">B (Nilai 85)</option> <option value="75">C (Nilai 75)</option> <option value="0">Belum Terakreditasi (Nilai 0)</option> </select> </div>
-                         <div class="flex space-x-3 pt-2">
-                             <button @click="calculateNilaiGabungan()" class="btn flex-grow" :disabled="loading">
-                                 <span x-show="!loading">Hitung Nilai Gabungan</span>
-                                 <span x-show="loading" class="flex items-center justify-center"> Menghitung... <svg class="animate-spin ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> </span>
-                             </button>
-                             <button @click="reset()" type="button" class="btn-secondary !px-4 !py-2 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"> <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /> </svg>
+                        </div>
+                        <div>
+                            
+                            <label for="ppdb_akreditasi" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai Akreditasi Sekolah (0-100)</label>
+                            <input type="number" step="any" id="ppdb_akreditasi" x-model.number="akreditasiSekolah" @input="validateInput('akreditasiSekolah', akreditasiSekolah, 0, 100)" placeholder="mis: 91" class="input-field" :class="{'input-error': errors.akreditasiSekolah}">
+                            <p x-show="errors.akreditasiSekolah" x-text="errors.akreditasiSekolah" class="error-text"></p>
+
+                        </div>
+                        <div class="flex space-x-3 pt-2">
+                            <button @click="calculateNilaiGabungan()" class="btn flex-grow" :disabled="loading">
+                                <span x-show="!loading">Hitung Nilai Gabungan</span>
+                                <span x-show="loading" class="flex items-center justify-center"> Menghitung...</span>
+                            </button>
+                            <button @click="reset()" type="button" class="btn-secondary !px-4 !py-2 flex items-center">
                                 Reset
                             </button>
-                         </div>
+                        </div>
                     </div>
                      <div class="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-lg space-y-4">
                          <h3 class="text-xl font-semibold text-orange-800 dark:text-orange-200 text-center">Hasil Nilai Gabungan</h3>
